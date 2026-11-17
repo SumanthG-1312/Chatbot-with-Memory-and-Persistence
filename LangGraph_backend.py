@@ -1,20 +1,30 @@
-
-from langgraph.graph import StateGraph, START, END
 from typing import TypedDict, Annotated
-from langchain_core.messages import BaseMessage, SystemMessage
-from langchain_groq import ChatGroq
-from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.graph.message import add_messages
+
 from dotenv import load_dotenv
+
+from langchain_core.messages import (
+    BaseMessage,
+    SystemMessage
+)
+
+from langchain_groq import ChatGroq
+
+from langgraph.graph import (
+    StateGraph,
+    START,
+    END
+)
+
+from langgraph.graph.message import add_messages
+from langgraph.checkpoint.memory import InMemorySaver
 
 load_dotenv()
 
 llm = ChatGroq(
-            model = 'openai/gpt-oss-120b',
-            max_tokens = 700,
-            temperature = 0.3
-            )
-
+    model="openai/gpt-oss-120b",
+    max_tokens=700,
+    temperature=0.3
+)
 
 SYSTEM_PROMPT = """
 You are a helpful, intelligent, and conversational AI assistant.
@@ -27,7 +37,7 @@ RESPONSE FORMATTING RULES:
 2. Use ## for main headings and ### for subheadings.
 3. Use bullet points for explanations.
 4. Use numbered lists for sequential instructions.
-5. Use **bold** for important terms.
+5. Use **bold** for important details.
 6. Use tables when comparing multiple items.
 7. Use code blocks for programming examples.
 8. Keep paragraphs short and readable.
@@ -58,6 +68,7 @@ RESPONSE ENDING RULES:
 8. Offer next steps only when they add real value.
 
 IMPORTANT:
+
 - Do not return everything as one long paragraph.
 - Avoid unnecessary headings for simple questions.
 - Do not force a summary or conclusion into every response.
@@ -72,16 +83,15 @@ class ChatState(TypedDict):
 
 def chat_node(state: ChatState):
 
-    messages = state["messages"]
+    messages = [
+        SystemMessage(content=SYSTEM_PROMPT)
+    ] + state["messages"]
 
-    response = llm.invoke(
-        [SystemMessage(content=SYSTEM_PROMPT)] + messages
-    )
+    response = llm.invoke(messages)
 
     return {"messages": [response]}
 
 
-# Checkpointer
 checkpointer = InMemorySaver()
 
 graph = StateGraph(ChatState)
