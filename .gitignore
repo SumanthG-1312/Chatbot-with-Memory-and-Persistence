@@ -1,3 +1,5 @@
 .env
 
 chatbotvenv
+
+__pycache__
