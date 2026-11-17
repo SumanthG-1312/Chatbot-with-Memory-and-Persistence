@@ -1,0 +1,131 @@
+STREAMING IN LLM APPLICATIONS
+================================
+
+1. DEFINITION
+-------------
+Streaming is the process of displaying an LLM's response in small chunks as it is being generated, instead of waiting for the entire response to finish.
+
+In simple words, streaming allows users to see the AI's response gradually, token by token or chunk by chunk.
+
+
+2. WHY DO WE USE STREAMING?
+---------------------------
+We use streaming to make AI applications faster, more interactive, and user-friendly.
+
+Main reasons:
+
+1. Reduced Waiting Time:
+   Users can see the response immediately without waiting for the complete answer.
+
+2. Better User Experience:
+   It makes AI applications feel more natural and conversational.
+
+3. Real-Time Feedback:
+   Users can observe the response while the model is generating it.
+
+4. Handling Long Responses:
+   Long answers can be displayed gradually instead of appearing all at once.
+
+5. Improved Interactivity:
+   It makes chatbots, AI assistants, and conversational applications more responsive.
+
+
+3. STREAMING VS NON-STREAMING
+-----------------------------
+
+NON-STREAMING:
+- User sends a prompt.
+- Model generates the complete response.
+- Application waits until generation finishes.
+- Entire response is displayed at once.
+
+STREAMING:
+- User sends a prompt.
+- Model starts generating the response.
+- Output is divided into small chunks.
+- Application displays each chunk as it arrives.
+- User sees the response progressively.
+
+
+4. SIMPLE EXAMPLE
+-----------------
+
+Question: Explain Machine Learning.
+
+WITHOUT STREAMING:
+The user waits until the model generates the entire explanation.
+Then the complete answer appears at once.
+
+WITH STREAMING:
+The first few words appear immediately.
+The remaining explanation keeps appearing gradually as the model generates it.
+
+
+5. HOW STREAMING WORKS
+----------------------
+
+1. User sends a prompt to the LLM.
+2. The model starts generating the response.
+3. The generated output is divided into small chunks or tokens.
+4. These chunks are sent to the application as they become available.
+5. The application displays the chunks sequentially.
+6. Streaming stops when the model completes its response.
+
+
+6. STREAMING IN LANGCHAIN
+-------------------------
+
+LangChain provides streaming methods to receive LLM responses incrementally.
+
+Common methods:
+
+1. stream()
+   - Synchronously receives output chunks.
+   - Useful for displaying responses progressively.
+
+2. astream()
+   - Asynchronously receives output chunks.
+   - Useful for asynchronous applications.
+
+NOTE:
+A token is a unit of text processed by an LLM. It can be a complete word, part of a word, or punctuation.
+
+
+7. WHEN SHOULD WE USE STREAMING?
+--------------------------------
+
+- While building AI chatbots.
+- While developing conversational AI applications.
+- When generating long responses.
+- When creating real-time AI assistants.
+- When improving the responsiveness of an application.
+
+
+8. IMPORTANT POINTS
+-------------------
+
+- Streaming does not necessarily make the model generate faster.
+- It reduces the user's perceived waiting time.
+- It improves the interactive experience.
+- The final response is formed by combining the generated chunks.
+- Streaming is especially useful for chat-based applications.
+
+
+9. QUICK REVISION
+-----------------
+
+DEFINITION:
+Streaming is the technique of displaying an LLM's response incrementally, chunk by chunk, while it is being generated.
+
+WHY STREAMING?
+1. Reduces perceived waiting time.
+2. Improves user experience.
+3. Provides real-time feedback.
+4. Handles long responses effectively.
+5. Makes AI applications more interactive.
+
+ONE-LINE DIFFERENCE:
+
+Non-Streaming: Displays the complete response at once.
+
+Streaming: Displays the response gradually as it is generated.
