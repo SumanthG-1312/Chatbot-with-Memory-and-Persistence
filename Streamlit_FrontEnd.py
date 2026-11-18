@@ -1,173 +1,123 @@
 import streamlit as st
 import uuid
 
+from langchain_core.messages import HumanMessage, AIMessage
 from LangGraph_backend import chatbot
-from langchain_core.messages import HumanMessage
+
+st.set_page_config(page_title="AI Chatbot", page_icon="🤖")
+
+# Session State
+if "chats" not in st.session_state:
+    st.session_state.chats = {}
+
+if "thread_id" not in st.session_state:
+    st.session_state.thread_id = None
 
 
-# ---------------- Page Configuration ----------------
+# Create New Chat
+def new_chat():
+    tid = str(uuid.uuid4())
 
-st.set_page_config(
-    page_title="AI Chatbot",
-    page_icon="🤖",
-    layout="centered"
-)
+    st.session_state.chats[tid] = {
+        "title": "New Chat",
+        "messages": []
+    }
 
-
-# ---------------- Utility Functions ----------------
-
-def generate_threadId():
-    return str(uuid.uuid4())
+    st.session_state.thread_id = tid
 
 
-def add_thread(thread_id):
-
-    if thread_id not in st.session_state["chat_threads"]:
-        st.session_state["chat_threads"].append(thread_id)
-
-
-def reset_chat():
-
-    thread_id = generate_threadId()
-
-    st.session_state["thread_id"] = thread_id
-    st.session_state["message_history"] = []
-
-    add_thread(thread_id)
+# Initialize Chat
+if (
+    st.session_state.thread_id is None
+    or st.session_state.thread_id not in st.session_state.chats
+):
+    new_chat()
 
 
-def load_conversation(thread_id):
+# Sidebar
+with st.sidebar:
 
-    st.session_state["thread_id"] = thread_id
+    st.title("🤖 AI Chatbot")
 
-    state = chatbot.get_state(
-        {
-            "configurable": {
-                "thread_id": thread_id
-            }
-        }
-    )
+    if st.button("➕ New Chat", use_container_width=True):
+        new_chat()
+        st.rerun()
 
-    messages = state.values.get("messages", [])
+    st.divider()
+    st.subheader("💬 Conversation History")
 
-    history = []
+    for tid, chat in reversed(list(st.session_state.chats.items())):
 
-    for message in messages:
+        # Hide empty conversations
+        if not chat["messages"]:
+            continue
 
-        if message.type == "human":
-            history.append({
-                "role": "user",
-                "content": message.content
-            })
+        col1, col2 = st.columns([5, 1])
 
-        elif message.type == "ai":
-            history.append({
-                "role": "assistant",
-                "content": message.content
-            })
+        with col1:
+            if st.button(chat["title"], key=tid, use_container_width=True):
+                st.session_state.thread_id = tid
+                st.rerun()
 
-    st.session_state["message_history"] = history
+        with col2:
+            if st.button("🗑️", key=f"del_{tid}"):
+                del st.session_state.chats[tid]
+
+                if st.session_state.thread_id == tid:
+                    st.session_state.thread_id = None
+
+                st.rerun()
 
 
-# ---------------- Streaming Function ----------------
+# Current Chat
+tid = st.session_state.thread_id
+chat = st.session_state.chats[tid]
 
-def generate_response(user_input):
+st.title(chat["title"])
 
+
+# Display Messages
+for msg in chat["messages"]:
+
+    role = "user" if isinstance(msg, HumanMessage) else "assistant"
+
+    with st.chat_message(role):
+        st.markdown(msg.content)
+
+
+# Chat Input
+if prompt := st.chat_input("Ask me anything..."):
+
+    # Generate title from first message
+    if not chat["messages"]:
+        chat["title"] = " ".join(prompt.split()[:5])
+
+    # Display User Message
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    # LangGraph Configuration
     config = {
         "configurable": {
-            "thread_id": st.session_state["thread_id"]
+            "thread_id": tid
         }
     }
 
-    for message_chunk, metadata in chatbot.stream(
-        {
-            "messages": [
-                HumanMessage(content=user_input)
-            ]
-        },
-        config=config,
-        stream_mode="messages"
-    ):
-
-        if (
-            message_chunk.content
-            and metadata.get("langgraph_node") == "chat_node"
-        ):
-            yield message_chunk.content
-
-
-# ---------------- Session Initialization ----------------
-
-if "thread_id" not in st.session_state:
-    st.session_state["thread_id"] = generate_threadId()
-
-if "chat_threads" not in st.session_state:
-    st.session_state["chat_threads"] = []
-
-if "message_history" not in st.session_state:
-    st.session_state["message_history"] = []
-
-add_thread(st.session_state["thread_id"])
-
-
-# ---------------- Sidebar UI ----------------
-
-st.sidebar.title("LangGraph Chatbot")
-
-if st.sidebar.button(" + New Chat", use_container_width=True):
-    reset_chat()
-    st.rerun()
-
-
-st.sidebar.header("My Conversations")
-
-for thread_id in st.session_state["chat_threads"]:
-
-    if st.sidebar.button(
-        thread_id,
-        key=thread_id,
-        use_container_width=True
-    ):
-
-        load_conversation(thread_id)
-        st.rerun()
-
-
-# ---------------- Main UI ----------------
-
-st.title("AI Assistant")
-st.caption("Ask anything. Get structured AI responses.")
-
-
-# ---------------- Display Conversation History ----------------
-
-for message in st.session_state["message_history"]:
-
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-
-
-# ---------------- User Input ----------------
-
-user_input = st.chat_input("Type your message...")
-
-if user_input:
-
-    st.session_state["message_history"].append({
-        "role": "user",
-        "content": user_input
-    })
-
-    with st.chat_message("user"):
-        st.markdown(user_input)
-
+    # Get AI Response
     with st.chat_message("assistant"):
 
-        ai_message = st.write_stream(
-            generate_response(user_input)
-        )
+        with st.spinner("Thinking..."):
 
-    st.session_state["message_history"].append({
-        "role": "assistant",
-        "content": ai_message
-    })
+            response = chatbot.invoke(
+                {"messages": [HumanMessage(content=prompt)]},
+                config=config
+            )
+
+            ai_message = response["messages"][-1]
+
+            st.markdown(ai_message.content)
+
+    # Save Conversation
+    chat["messages"] = response["messages"]
+
+    st.rerun()
