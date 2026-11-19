@@ -108,7 +108,7 @@ if prompt := st.chat_input("Ask me anything..."):
 
         with st.spinner("Thinking..."):
 
-            response = chatbot.invoke(
+            response = chatbot.stream(
                 {"messages": [HumanMessage(content=prompt)]},
                 config=config
             )
